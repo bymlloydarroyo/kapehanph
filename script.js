@@ -30,6 +30,11 @@ const stars = r => `<span class="rate"><span class="st" style="--p:${r / 5 * 100
 const grad = i => `linear-gradient(135deg,${G[i % G.length].split(',').join(',')})`;
 const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600) ;};
 
+let editing = null;
+const own = c => !!(me && c.owner && c.owner === me.em);
+const ownBtns = (c, i) => own(c)
+  ? `<div class="acts own"><button class="btn ghost" data-edit="${i}">Edit café</button><button class="btn danger" data-del="${i}">Delete</button></div>`
+  : '';
 function card(c) {
   const i = cafes.indexOf(c), o = isOpen(c), d = dist(c);
   return `<article class="card tilt"><div class="cov" style="background:${grad(i)}">☕<span class="badge ${o ? '' : 'x'}">${o ? 'Open' : 'Closed'}</span>${d != null ? `<span class="dist">${d.toFixed(1)} km</span>` : ''}</div>
@@ -37,7 +42,7 @@ function card(c) {
  <div class="rate">${stars(c.r)}<span class="meta">(${c.v} reviews)</span></div>
  <div class="meta">${f12(c.o)} – ${f12(c.c)}</div>
  <div class="tags">${c.t.slice(0, 3).map(t => `<span>${esc(t)}</span>`).join('')}</div>
- <div class="acts"><button class="btn ghost" data-p="${i}">View profile</button><a class="btn" target="_blank" rel="noopener" href="${gmap(c)}">Google Maps</a></div></div></article>`;
+ <div class="acts"><button class="btn ghost" data-p="${i}">View profile</button><a class="btn" target="_blank" rel="noopener" href="${gmap(c)}">Google Maps</a></div>${ownBtns(c, i)}</div></article>`;
 }
 /* render */
 function renderFeat() { $('#featList').innerHTML = [...cafes].sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 6).map(card).join('') ;}
@@ -67,16 +72,45 @@ function renderSubmit() {
  <label>Your rating<select name="r">${[5, 4.5, 4, 3.5, 3].map(x => `<option>${x}</option>`).join('')}</select></label>
  <label class="full">Tags, separated by commas<input name="t" placeholder="Pour over, Quiet, Wi-Fi"></label>
  <label class="full">What makes it good?<textarea name="d" rows="3" maxlength="200" required></textarea></label>
- <button class="btn full" style="justify-content:center">Submit café</button></form>`
+ <div class="full acts" style="padding:0"><button class="btn">${editing ? 'Save changes' : 'Submit café'}</button>${editing ? '<button type="button" class="btn ghost" data-cancel>Cancel</button>' : ''}</div></form>`
     : `<div class="lock"><h3>Sign in to submit a café</h3><p class="meta" style="margin:8px 0 18px">It takes 20 seconds. Create an account or sign in.</p><button class="btn" data-auth>Sign in or create account</button></div>`;
   renderCities();
+  if (me && editing) fillForm(editing);
+}
+function fillForm(c) {
+  const f = $('#subF'); if (!f) return;
+  const el = f.elements;
+  el.n.value = c.n; el.a.value = c.a; el.o.value = c.o; el.c.value = c.c; el.r.value = c.r;
+  el.t.value = c.t.join(', '); el.d.value = c.d;
+  const known = [...el.city.options].some(o => o.value === c.city);
+  el.city.value = known ? c.city : '__o';
+  $('#oc').hidden = known;
+  if (!known) el.oc.value = c.city;
+}
+function startEdit(c) {
+  if (!own(c)) return;
+  editing = c;
+  if ($('#profD').open) $('#profD').close();
+  renderSubmit();
+  $('#submit').scrollIntoView();
+  toast('Editing ' + c.n);
+}
+function delCafe(c) {
+  if (!own(c)) return;
+  if (!confirm('Delete "' + c.n + '"? This cannot be undone.')) return;
+  cafes.splice(cafes.indexOf(c), 1);
+  store.set('bw_cafes', store.get('bw_cafes', []).filter(x => x.id !== c.id));
+  if (editing === c) editing = null;
+  if ($('#profD').open) $('#profD').close();
+  refreshAll(); renderSubmit();
+  toast('Café deleted');
 }
 function refreshAll() { renderFeat(); renderCities(); renderList(); tilt() ;}
 /* auth */
 let mode = 'in';
 function setMode(m) { mode = m; $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === m)); $('#an').hidden = m === 'in'; $('#an').required = m === 'up'; $('#asb').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('#ae2').textContent = '' ;}
 function authUI() { $('#authBtn').textContent = me ? 'Hi, ' + me.name.split(' ')[0] : 'Sign in' ;}
-$('#authBtn').onclick = () => { if (me) { me = null; store.set('bw_session', null); authUI(); renderSubmit(); toast('Signed out') ;} else { setMode('in'); $('#authD').showModal() ;} };
+$('#authBtn').onclick = () => { if (me) { me = null; store.set('bw_session', null); editing = null; authUI(); renderSubmit(); refreshAll(); toast('Signed out') ;} else { setMode('in'); $('#authD').showModal() ;} };
 $$('.tabs button').forEach(b => b.onclick = () => setMode(b.dataset.t));
 $('#authF').onsubmit = e => {  
 e.preventDefault();
@@ -86,10 +120,13 @@ if (users.some(u => u.em === em)) return $('#ae2').textContent = 'That email alr
     const u = { em, name: $('#an').value.trim() || 'Friend', pw: btoa(unescape(encodeURIComponent(pw))) }; users.push(u); store.set('bw_users', users); me = u  
 ;}
   else { const u = users.find(u => u.em === em && u.pw === btoa(unescape(encodeURIComponent(pw)))); if (!u) return $('#ae2').textContent = 'Email or password is wrong. Check both, or create an account.'; me = u ;}
-  store.set('bw_session', { em: me.em, name: me.name }); me = { em: me.em, name: me.name }; $('#authD').close(); $('#authF').reset(); authUI(); renderSubmit(); toast('Welcome, ' + me.name.split(' ')[0] + '!');
+  store.set('bw_session', { em: me.em, name: me.name }); me = { em: me.em, name: me.name }; $('#authD').close(); $('#authF').reset(); authUI(); renderSubmit(); refreshAll(); toast('Welcome, ' + me.name.split(' ')[0] + '!');
 };
 /* events */
 document.addEventListener('click', e => {
+  const ed = e.target.closest('[data-edit]'); if (ed) return startEdit(cafes[+ed.dataset.edit]);
+  const dl = e.target.closest('[data-del]'); if (dl) return delCafe(cafes[+dl.dataset.del]);
+  if (e.target.closest('[data-cancel]')) { editing = null; renderSubmit(); return; }
   const p = e.target.closest('[data-p]'); if (p) return openProf(+p.dataset.p);
   const c = e.target.closest('[data-c]'); if (c) { $('#fc').value = c.dataset.c; renderList(); $('#browse').scrollIntoView(); return ;}
   if (e.target.closest('[data-auth]')) { setMode('in'); $('#authD').showModal() ;}
@@ -107,9 +144,20 @@ document.addEventListener('submit', e => {
 if (e.target.id !== 'subF') return; e.preventDefault();
   const f = Object.fromEntries(new FormData(e.target)), city = f.city === '__o' ? (f.oc || '').trim() : f.city;
   if (!city) return toast('Enter a city for your café');
-  const c = { n: f.n.trim(), city, a: f.a.trim(), r: +f.r, v: 1, o: +f.o, c: +f.c, t: (f.t || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 4), d: f.d.trim(), by: me.name };
-  if (!c.t.length) c.t = ['New']; cafes.push(c); const mine = store.get('bw_cafes', []); mine.push(c); store.set('bw_cafes', mine);
-  refreshAll(); renderSubmit(); toast('Café submitted. Thanks, ' + me.name.split(' ')[0] + '!'); $('#browse').scrollIntoView()
+  const data = { n: f.n.trim(), city, a: f.a.trim(), r: +f.r, o: +f.o, c: +f.c, t: (f.t || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 4), d: f.d.trim() };
+  if (!data.t.length) data.t = ['New'];
+  const mine = store.get('bw_cafes', []);
+  if (editing) {
+    Object.assign(editing, data);
+    store.set('bw_cafes', mine.map(x => x.id === editing.id ? editing : x));
+    editing = null;
+    toast('Café updated');
+  } else {
+    const c = { ...data, v: 1, by: me.name, owner: me.em, id: Date.now() };
+    cafes.push(c); mine.push(c); store.set('bw_cafes', mine);
+    toast('Café submitted. Thanks, ' + me.name.split(' ')[0] + '!');
+  }
+  refreshAll(); renderSubmit(); $('#browse').scrollIntoView()
 ;});
 function openProf(i) {  
 const c = cafes[i], o = isOpen(c);
@@ -118,7 +166,7 @@ const c = cafes[i], o = isOpen(c);
  <div class="rate">${stars(c.r)}<span class="meta">${c.v} reviews</span><span class="badge ${o ? '' : 'x'}" style="position:static;border:1px solid var(--line)">${o ? 'Open now' : 'Closed now'}</span></div>
  <p>${esc(c.d)}</p>${c.by ? `<p class="meta">Submitted by ${esc(c.by)}</p>` : ''}
  <div class="hrs"><b>Hours</b><span>Daily, ${f12(c.o)} – ${f12(c.c)}</span><b>Tags</b><span>${c.t.map(esc).join(', ')}</span></div>
- <a class="btn" style="justify-content:center" target="_blank" rel="noopener" href="${gmap(c)}">View in Google Maps</a></div>`; $('#profD').showModal()
+ <a class="btn" style="justify-content:center" target="_blank" rel="noopener" href="${gmap(c)}">View in Google Maps</a>${ownBtns(c, i)}</div>`; $('#profD').showModal()
 ;}
 /* theme */
 function setTheme(t) { document.documentElement.dataset.theme = t; $('#theme').textContent = t === 'dark' ? '☀️' : '🌙'; store.set('bw_theme', t); if (window.__tint) window.__tint(t) ;}

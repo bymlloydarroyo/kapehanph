@@ -7,7 +7,7 @@ A responsive café finder for the Philippines. Built with plain HTML, CSS and Ja
 - Featured cafés, popular cities, and a searchable, filterable café list
 - Star ratings with numbers, open/closed status (Philippine time), café profile popup
 - "View in Google Maps" links and a "Near me" sort using the browser location
-- Sign up / sign in required before submitting a café
+- Sign up / sign in required before submitting a café; owners can edit or delete their own submissions
 - Dark mode (remembers your choice), mobile bottom navbar, tablet and desktop layouts
 
 ## Files

@@ -781,3 +781,19 @@ footer {
   }
 }
 
+
+/* edit and delete controls on your own cafés */
+.acts.own {
+  padding-top: 0;
+}
+
+.btn.danger {
+  background: transparent;
+  color: #d5503a;
+  border: 1.5px solid #d5503a;
+}
+
+.btn.danger:hover {
+  background: #d5503a;
+  color: #fff;
+}
