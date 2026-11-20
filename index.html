@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kapehan — Find coffee shops across the Philippines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="wrap nav">
+ <a class="logo" href="#top"><i>☕</i>Kapehan</a>
+ <nav class="links" aria-label="Main">
+  <a href="#top" data-i="🏠">Home</a>
+  <a href="#featured" data-i="⭐">Featured</a>
+  <a href="#cities" data-i="📍">Cities</a>
+  <a href="#browse" data-i="🔎">Browse</a>
+  <a href="#submit" data-i="➕">Submit</a>
+  <button class="lk" id="authBtn" data-i="👤">Sign in</button>
+  <button class="ico" id="theme" aria-label="Toggle dark mode">🌙</button>
+ </nav>
+</div></header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+ <div>
+  <h1><span style="animation-delay:.05s">Find</span> <span style="animation-delay:.15s">your</span> <span style="animation-delay:.25s">next</span> <span style="animation-delay:.35s">cup</span> <span style="animation-delay:.45s">anywhere</span> <span style="animation-delay:.55s">in</span> <span style="animation-delay:.65s">the</span> <span style="animation-delay:.75s">Philippines.</span></h1>
+  <p class="lead">Search local cafés by name, city or vibe. See who's open right now, read the ratings, and get directions in one tap.</p>
+  <form class="search" id="heroSearch"><input id="q" type="search" placeholder="Try “Baguio” or “pour over”" aria-label="Search cafés"><button class="btn">Search</button></form>
+  <div class="hint"><button class="chip" id="near">📍 Near me</button><button class="chip" data-c="Cebu City">Cebu City</button><button class="chip" data-c="Baguio">Baguio</button><button class="chip" data-c="Davao City">Davao</button></div>
+ </div>
+ <div id="stage"><div class="fallback">☕</div></div>
+</div></section>
+
+<section id="featured"><div class="wrap">
+ <div class="sh rev"><h2>Featured cafés</h2><p>Hand-picked spots with the highest ratings this month.</p></div>
+ <div class="feat" id="featList"></div>
+</div></section>
+
+<section id="cities" style="background:var(--bg2)"><div class="wrap">
+ <div class="sh rev"><h2>Popular cities</h2><p>Pick a city to see every café we've listed there.</p></div>
+ <div class="cities" id="cityList"></div>
+</div></section>
+
+<section id="browse"><div class="wrap">
+ <div class="sh rev"><h2>Browse all cafés</h2><p id="count"></p></div>
+ <div class="bar rev">
+  <input id="q2" type="search" placeholder="Search name, area or tag" aria-label="Search">
+  <select id="fc" aria-label="City"></select>
+  <select id="fs" aria-label="Sort"><option value="r">Top rated</option><option value="n">Name A–Z</option><option value="d">Nearest</option></select>
+  <select id="fo" aria-label="Status"><option value="">Open or closed</option><option value="1">Open now</option></select>
+ </div>
+ <div class="grid" id="list"></div>
+</div></section>
+
+<section id="submit" class="sub"><div class="wrap">
+ <div class="sh rev"><h2>Know a great café? Add it.</h2><p>Sign in to submit a café. It shows up in the list right away.</p></div>
+ <div id="subBox"></div>
+</div></section>
+</main>
+<footer><div class="wrap">Kapehan — a portfolio project. Sample café data for demo use.</div></footer>
+
+<dialog id="authD"><div class="dc"><button class="ico x" data-close aria-label="Close">✕</button>
+ <h2>Welcome to Kapehan</h2>
+ <div class="tabs"><button class="on" data-t="in">Sign in</button><button data-t="up">Create account</button></div>
+ <form id="authF"><input id="an" placeholder="Your name" autocomplete="name" hidden><input id="ae" type="email" placeholder="Email" required autocomplete="email"><input id="ap" type="password" placeholder="Password (6+ characters)" required minlength="6" autocomplete="current-password"><div class="err" id="ae2" role="alert"></div><button class="btn" id="asb" style="justify-content:center">Sign in</button></form>
+</div></dialog>
+<dialog id="profD"><div id="profC"></div></dialog>
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
